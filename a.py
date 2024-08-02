@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import json
-import calendar
 import streamlit as st
 from sqlalchemy import create_engine
 import seaborn as sns
@@ -59,12 +58,20 @@ def categorizar_subjetividade(valor):
     else:
         return 'Alto'
 
+# Função para obter o nome do mês
+def get_month_name(month):
+    month_names = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+    return month_names[month - 1]
+
 # Função para gerar todas as visualizações para um mês especificado
 def generate_monthly_visualizations(df, year, month):
     df_filtered = df[(df['AnoAtividade'] == year) & (df['MesAtividade'] == month)]
     
     if df_filtered.empty:
-        st.write(f"Sem dados para {calendar.month_name[month]} {year}.")
+        st.write(f"Sem dados para {get_month_name(month)} {year}.")
         return
 
     perfil_comportamental = df_filtered['Perfil_Comportamental'].dropna()
@@ -87,16 +94,16 @@ def generate_monthly_visualizations(df, year, month):
     additional_stopwords = set(['não', 'a', 'o', 'e', 'de', 'para', 'com', 'do', 'da', 'em', 'um', 'uma', 'que', 'se', 'os', 'as'])
     generate_word_cloud_with_stopwords(all_frases_contribuicoes_negativas_cleaned.split(), 'Frases Negativas - Contribuições', additional_stopwords)
 
-    generate_word_cloud_with_stopwords(flattened_reasons, f'Nuvem de Palavras dos Motivos das Justificativas - {calendar.month_name[month]} {year}', additional_stopwords)
-    generate_word_cloud_with_stopwords(perfil_comportamental, f'Nuvem de Palavras de Perfil Comportamental - {calendar.month_name[month]} {year}', additional_stopwords)
-    generate_word_cloud_with_stopwords(sentimentos, f'Nuvem de Palavras de Sentimentos - {calendar.month_name[month]} {year}', additional_stopwords)
-    generate_word_cloud_with_stopwords(palavras_chave, f'Nuvem de Palavras das Palavras-Chave - {calendar.month_name[month]} {year}', additional_stopwords)
+    generate_word_cloud_with_stopwords(flattened_reasons, f'Nuvem de Palavras dos Motivos das Justificativas - {get_month_name(month)} {year}', additional_stopwords)
+    generate_word_cloud_with_stopwords(perfil_comportamental, f'Nuvem de Palavras de Perfil Comportamental - {get_month_name(month)} {year}', additional_stopwords)
+    generate_word_cloud_with_stopwords(sentimentos, f'Nuvem de Palavras de Sentimentos - {get_month_name(month)} {year}', additional_stopwords)
+    generate_word_cloud_with_stopwords(palavras_chave, f'Nuvem de Palavras das Palavras-Chave - {get_month_name(month)} {year}', additional_stopwords)
 
     # Gráfico de barras para NomeAtividade
     nome_atividade_counts = df_filtered['NomeAtividade'].value_counts()
     plt.figure(figsize=(12, 6))
     nome_atividade_counts.plot(kind='bar')
-    plt.title(f'Contagem de NomeAtividade - {calendar.month_name[month]} {year}')
+    plt.title(f'Contagem de NomeAtividade - {get_month_name(month)} {year}')
     plt.xlabel('NomeAtividade')
     plt.ylabel('Contagem')
     st.pyplot(plt.gcf())
@@ -109,10 +116,10 @@ def generate_monthly_visualizations(df, year, month):
     plt.figure(figsize=(14, 7))
     plt.subplot(1, 2, 1)
     falha_sistemica_counts.plot(kind='pie', autopct='%1.1f%%', startangle=140, colors=['#ff9999','#66b3ff'])
-    plt.title(f'Distribuição de Falhas Sistêmicas - {calendar.month_name[month]} {year}')
+    plt.title(f'Distribuição de Falhas Sistêmicas - {get_month_name(month)} {year}')
     plt.subplot(1, 2, 2)
     falha_operacional_counts.plot(kind='pie', autopct='%1.1f%%', startangle=140, colors=['#ff9999','#66b3ff'])
-    plt.title(f'Distribuição de Falhas Operacionais - {calendar.month_name[month]} {year}')
+    plt.title(f'Distribuição de Falhas Operacionais - {get_month_name(month)} {year}')
     plt.tight_layout()
     st.pyplot(plt.gcf())
     plt.clf()  # Limpar a figura após renderizar
