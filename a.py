@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from collections import Counter
 import ast
 import calendar
 import streamlit as st
