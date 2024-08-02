@@ -17,12 +17,12 @@ def load_data():
     engine = create_engine(connection_string)
 
     # Consultar dados da tabela 'AnaliseJustificativaFalta'
-    query = """
-select * from AnaliseJustificativaFalta nolock
-union all
-select * from [AnaliseJustificativaFalta2024] nolock"""
-    df = pd.read_sql(query, engine)
-
+#     query = """
+# select * from AnaliseJustificativaFalta nolock
+# union all
+# select * from [AnaliseJustificativaFalta2024] nolock"""
+#     df = pd.read_sql(query, engine)
+    df = pd.read_csv('amostra_AnaliseJustificativaFalta.csv')
     return df
 
 # Função para converter as listas de strings em listas reais e achatar
