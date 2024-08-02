@@ -1,16 +1,17 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-import ast
+import json
 import calendar
 import streamlit as st
 from sqlalchemy import create_engine
 import seaborn as sns
+import re
 
 # Função para carregar dados
 def load_data():
     # String de conexão ao banco de dados com Trusted Connection
-    connection_string = f'mssql+pyodbc://@apml_tes/Sandbox?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes'
+    connection_string = 'mssql+pyodbc://@apml_tes/Sandbox?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes'
 
     # Criar engine de conexão
     engine = create_engine(connection_string)
@@ -29,15 +30,17 @@ def flatten_reason_lists(column_data):
     reasons = []
     for item in column_data.dropna():
         try:
-            reason_list = ast.literal_eval(item)
-            if isinstance(reason_list, list):
-                reasons.extend(reason_list)
+            reason_list = re.findall(r"'(.*?)'", item)
+            reasons.extend(reason_list)
         except (ValueError, SyntaxError):
             continue
     return reasons
 
 # Função para gerar nuvem de palavras com stopwords adicionais
 def generate_word_cloud_with_stopwords(data, title, stopwords):
+    if len(data) == 0:
+        st.write(f"Sem dados suficientes para gerar a nuvem de palavras: {title}")
+        return
     text = ' '.join(data)
     wordcloud = WordCloud(width=800, height=400, background_color='white', stopwords=stopwords).generate(text)
     plt.figure(figsize=(10, 5))
@@ -71,26 +74,18 @@ def generate_monthly_visualizations(df, year, month):
     motivo_justificativa = df_filtered['Razoes_Possiveis']
     flattened_reasons = flatten_reason_lists(motivo_justificativa)
 
-    def safe_literal_eval(val):
+    def safe_extract_keys(val):
         try:
-            return ast.literal_eval(val)
+            return re.findall(r"'(.*?)'", val)
         except Exception as e:
-            print(f"Erro ao processar a string: {val} -> {e}")
-            return {}
+            return []
 
-    contribuicoes_negativas = df['Contribuicoes'].apply(lambda x: safe_literal_eval(x) if isinstance(x, str) else {})
-    all_frases_contribuicoes_negativas_cleaned = ' '.join([k for contrib in contribuicoes_negativas for k in contrib.keys() if isinstance(k, str)])
+    contribuicoes_negativas = df_filtered['Contribuicoes'].apply(lambda x: safe_extract_keys(x) if isinstance(x, str) else {})
+    all_frases_contribuicoes_negativas_cleaned = ' '.join([k for contrib in contribuicoes_negativas for k in contrib if isinstance(k, str)])
         
     # Gerar nuvens de palavras
     additional_stopwords = set(['não', 'a', 'o', 'e', 'de', 'para', 'com', 'do', 'da', 'em', 'um', 'uma', 'que', 'se', 'os', 'as'])
-    wordcloud_frases_negativas_cleaned = WordCloud(width=800, height=400, background_color='white', stopwords=additional_stopwords).generate(all_frases_contribuicoes_negativas_cleaned)
-        
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud_frases_negativas_cleaned, interpolation='bilinear')
-    plt.axis('off')
-    plt.title('Frases Negativas - Contribuições')
-    st.pyplot(plt.gcf())
-    plt.clf()  # Limpar a figura após renderizar
+    generate_word_cloud_with_stopwords(all_frases_contribuicoes_negativas_cleaned.split(), 'Frases Negativas - Contribuições', additional_stopwords)
 
     generate_word_cloud_with_stopwords(flattened_reasons, f'Nuvem de Palavras dos Motivos das Justificativas - {calendar.month_name[month]} {year}', additional_stopwords)
     generate_word_cloud_with_stopwords(perfil_comportamental, f'Nuvem de Palavras de Perfil Comportamental - {calendar.month_name[month]} {year}', additional_stopwords)
@@ -140,6 +135,7 @@ def generate_monthly_visualizations(df, year, month):
     plt.legend(title='Situação')
     st.pyplot(plt.gcf())
     plt.clf()  # Limpar a figura após renderizar
+
 
 # Configuração do Streamlit
 st.title('Dashboard de Justificativas de Faltas')
