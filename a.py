@@ -17,7 +17,10 @@ def load_data():
     engine = create_engine(connection_string)
 
     # Consultar dados da tabela 'AnaliseJustificativaFalta'
-    query = "SELECT * FROM AnaliseJustificativaFalta (nolock)"
+    query = """
+select * from AnaliseJustificativaFalta nolock
+union all
+select * from [AnaliseJustificativaFalta2024] nolock"""
     df = pd.read_sql(query, engine)
 
     return df
