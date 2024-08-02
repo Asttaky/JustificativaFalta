@@ -9,3 +9,4 @@ sqlalchemy==1.4.23
 seaborn==0.11.2
 pyodbc==4.0.32
 setuptools==72.1.0
+numpy==2.0.1
